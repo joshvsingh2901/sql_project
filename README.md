@@ -25,7 +25,7 @@ Identify which categories and products deliver the highest contribution to **gro
 - Category share of company total  
 - Ranks: product within category and category overall
 
-**🖥️ Query**: [`Scripts/1_category_profitability.sql`](Scripts/1_product_analysis.sql)
+**🖥️ Query**: [`Scripts/1_product_analysis.sql`](Scripts/1_product_analysis.sql)
 
 **📈 Visualization**  
 _Gross Profit by Category (Top-5 products vs long tail)_
@@ -147,16 +147,25 @@ _Gross Profit Momentum vs Percentile Bands – Top 3 Categories (Computers, Cell
 
 ---
 
+## Data Model & SQL Design
+
+The analysis treats `sales` as the central transaction table. Product and customer attributes are joined by keys when the analysis needs descriptive business context, keeping transaction-level measures separate from descriptive entities. This mirrors a simple analytical model and makes each calculation traceable back to the underlying sales activity.
+
+- **`sales`** provides transaction-level measures such as quantity, price, exchange rate, and order date.
+- **`product_clean`** adds product and category attributes used for profitability and ranking analysis.
+- **`customer`** provides customer attributes used to separate new and returning customer behaviour.
+
 ## Technical Details
-- **Database:** PostgreSQL  
-- **Data Model:** `sales` fact joined with `product_clean`, `customer`  
-- **Key Techniques:** CTE pipelines, window functions (`ROWS BETWEEN`, `RANK`, `NTILE`), percentile functions (`PERCENTILE_CONT`), conditional aggregates with `FILTER`, regex standardization of product names  
-- **Visualization:** Created by me using **Matplotlib in Python**  
+- **Database:** PostgreSQL
+- **SQL design:** CTE pipelines break larger analyses into readable stages before final aggregation.
+- **Window functions:** `SUM ... OVER`, `RANK`, and `DENSE_RANK` support category totals and relative performance without losing row-level context.
+- **Historical benchmarking:** `PERCENTILE_CONT` creates 25th–75th percentile bands for comparing current rolling gross profit with historical norms.
+- **Visualization:** Python and Matplotlib turn query outputs into interpretable business charts.
 
 ## Repro Steps
-1. Run `Scripts/1_category_profitability.sql` → export and plot `q1_category_profitability.png`.  
-2. Run `Scripts/2a_2023_customer_analysis.sql` → export and plot `q2a_gross_profit_2023.png`, `q2a_order_count_2023.png`.  
-3. Run `Scripts/2b_historical_customer_analysis.sql` and `Scripts/2c_comparison_customer_analysis.sql` → export and plot `q2b_annual_comparison.png`, `q2c_monthly_trends.png`.  
-4. Run `Scripts/3_momentum_band_analysis.sql` → export and plot `q3_momentum_top3.png`.  
+1. Run `Scripts/1_product_analysis.sql` and generate `images_all/q1_image.png`.
+2. Run `Scripts/2a_2023_customer_analysis.sql` and generate `images_all/q2_2023_gross_new_vs_old.png` and `images_all/q2_2023_order_count.png`.
+3. Run `Scripts/2b_historical_customer_analysis.sql` and `Scripts/2c_comparison_customer_analysis.sql` to generate `images_all/q2_2023_vs_historical_average.png` and `images_all/q2_monthly_gross_trend.png`.
+4. Run `Scripts/3_momentum_band_analysis.sql` and generate `images_all/q3_gp_rolling_trend.png`.
 
 ---
